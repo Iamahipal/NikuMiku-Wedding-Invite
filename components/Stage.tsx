@@ -49,8 +49,8 @@ export default function Stage() {
       // go above 1 — you lose the bloom rolloff that makes it look hot.
       onCreated={({ gl, scene }) => {
         gl.toneMapping = THREE.ACESFilmicToneMapping;
-        gl.toneMappingExposure = 1.16;
-        scene.background = new THREE.Color('#02040c');
+        gl.toneMappingExposure = 1.08;
+        scene.background = new THREE.Color('#060402');
         // Exposed for measurement: triangle and draw-call counts are the only
         // hardware-independent perf numbers available here, since this sandbox
         // renders through SwiftShader rather than a GPU.

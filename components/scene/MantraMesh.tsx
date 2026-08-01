@@ -215,10 +215,11 @@ export default function MantraMesh() {
           clearcoatRoughness={0.13}
           // The cool blue-steel tint along the edges. This is the detail that
           // separates one letterform from the next on a warm-on-warm field.
-          // Enough to tint the silhouette edges cool; more than this and
-          // the cool lights take over and the gold reads as blue steel.
-          iridescence={0.16}
-          iridescenceIOR={1.28}
+          // Kept low on a black-and-gold palette: iridescence is what tints
+          // the silhouette edges blue, and blue is exactly what this scheme is
+          // getting rid of. Just enough to keep the edges from going flat.
+          iridescence={0.07}
+          iridescenceIOR={1.22}
           envMapIntensity={SHINE.envIntensity.far}
           // The camera flies *through* the letterforms; with front-face culling
           // the interior walls would be invisible at the most dramatic moment.

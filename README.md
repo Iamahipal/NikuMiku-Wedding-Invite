@@ -68,7 +68,7 @@ components/
     MantraMesh.tsx    mantra.svg → bevelled gold
     BigBang.tsx       spark, shockwave, ember burst
     DustField.tsx     infinite-wrap golden dust (one draw call)
-    Backdrop.tsx      royal blue gradient void
+    Backdrop.tsx      warm black gradient void
     StudioEnv.tsx     procedural Lightformer rig — no HDRI download
     CameraRig.tsx     the only place targets become motion
     PostRig.tsx       per-frame effect modulation
@@ -124,6 +124,19 @@ art-directed for one aspect ratio: a phone in portrait has a far narrower horizo
 field of view, so the same geometry overflows the frame long before it is readable —
 the text gets cropped to two or three letters at exactly the moment you are meant to
 read it.
+
+## Palette: black and gold
+
+Flat pure black would be a mistake — it gives the tone mapper nothing at the edges
+and the corners read as dead patches instead of depth. So the void is a *warm* black:
+a low gold-brown haze pooling behind the mantra, falling away to almost nothing at
+the extremes. Everything stays in the gold family without competing with the metal.
+
+The rim lights that separate one letterform from the next are near-neutral whites
+rather than blue. They still read as cool *relative to* the gold, which is all the
+separation needs — an actually blue rim drags the whole frame back toward navy, and
+`iridescence` is kept low for the same reason, since it is what tints silhouette
+edges blue.
 
 ## Look development notes
 

@@ -129,7 +129,7 @@ export default function DustField() {
       uSize: { value: 2.4 },
       uWarp: { value: 0 },
       uCore: { value: new THREE.Color('#ffe3b0') },
-      uGlow: { value: new THREE.Color('#e8a63c') },
+      uGlow: { value: new THREE.Color('#e39a2c') },
     }),
     [],
   );

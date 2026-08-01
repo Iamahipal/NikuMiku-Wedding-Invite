@@ -4,16 +4,16 @@ import { useMemo } from 'react';
 import * as THREE from 'three';
 
 /**
- * The royal blue void the whole film sits in.
+ * The black-and-gold void the whole film sits in.
  *
- * Without this the scene renders against pure black, and gold-on-black loses
- * the colour entirely — every highlight tone-maps toward white and the result
- * reads as a monochrome starfield. A deep blue field gives the gold something
- * to be gold *against*.
+ * Pure flat black would be a mistake: it gives the tone mapper nothing to
+ * work with at the edges, and the corners read as dead patches rather than as
+ * depth. So this is a *warm* black — a low gold-brown haze pooling behind the
+ * mantra and falling away to almost nothing at the extremes, keeping the whole
+ * frame in the gold family without ever competing with the metal.
  *
  * An inverted sphere rather than a `scene.background` colour, because this way
- * it can carry a gradient: brighter in the centre of frame, falling to near
- * black at the edges, which quietly focuses the eye where the mantra arrives.
+ * it can carry that gradient.
  */
 export default function Backdrop() {
   const material = useMemo(
@@ -24,8 +24,8 @@ export default function Backdrop() {
         depthTest: false,
         toneMapped: false,
         uniforms: {
-          uCore: { value: new THREE.Color('#0f2148') },
-          uEdge: { value: new THREE.Color('#081128') },
+          uCore: { value: new THREE.Color('#1a1005') },
+          uEdge: { value: new THREE.Color('#050302') },
         },
         vertexShader: /* glsl */ `
           varying vec3 vDir;
@@ -41,10 +41,9 @@ export default function Backdrop() {
           void main() {
             // Brightest straight ahead (-Z), falling off toward the periphery.
             float d = clamp(-vDir.z * 0.5 + 0.5, 0.0, 1.0);
-            // Gentle enough that the corners never crush to black — four dark
-            // patches read as a vignette artefact, not as space — but not so
-            // flat that the field becomes a painted blue wall with no depth.
-            float g = pow(d, 2.6);
+            // Gentle enough that the corners never crush to a hard black edge —
+            // four dark patches read as a vignette artefact, not as space.
+            float g = pow(d, 2.2);
             gl_FragColor = vec4(mix(uEdge, uCore, g), 1.0);
           }
         `,

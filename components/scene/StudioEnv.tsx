@@ -23,10 +23,12 @@ import { timeline } from '@/lib/timeline';
  * So this environment is mostly black, lit by a few very bright, very small
  * shapes. High dynamic range, low coverage.
  *
- * The second ingredient is COOL light. Warm-only lighting gives warm-on-warm
- * mush. A blue rim behind and a cool side fill push the silhouette edges toward
- * steel-blue, which is what separates one letterform from the next and gives
- * the gold something to be warm *against*.
+ * The second ingredient is a COOLER rim. Warm-only lighting gives warm-on-warm
+ * mush with no edge separation between letterforms. But on a black-and-gold
+ * palette that rim must stay near-neutral: an actually blue rim drags the whole
+ * frame back toward navy, which is the one thing this scheme is avoiding. So
+ * these are desaturated near-whites — cool *relative to* the gold, and read as
+ * specular rather than as colour.
  */
 export default function StudioEnv() {
   const key = useRef<THREE.DirectionalLight>(null);
@@ -63,7 +65,7 @@ export default function StudioEnv() {
             the shadows and the whole thing turns to gunmetal. */}
         <mesh scale={100}>
           <sphereGeometry args={[1, 32, 32]} />
-          <meshBasicMaterial color="#1c1408" side={THREE.BackSide} />
+          <meshBasicMaterial color="#1f1509" side={THREE.BackSide} />
         </mesh>
 
         {/* Broad warm field. The flat faces of the letterforms reflect a wide
@@ -103,19 +105,19 @@ export default function StudioEnv() {
           scale={[4, 4, 1]}
         />
 
-        {/* --- COOL: the edge separation. Without these the gold is
+        {/* --- NEUTRAL RIM: the edge separation. Without these the gold is
             warm-on-warm and the letterforms merge into one another. --- */}
         <Lightformer
           form="ring"
-          intensity={2.4}
-          color="#4a72ad"
+          intensity={2.6}
+          color="#cfd6e0"
           position={[0, 0, -16]}
           scale={[13, 13, 1]}
         />
         <Lightformer
           form="rect"
-          intensity={1.1}
-          color="#8fa5c9"
+          intensity={1.2}
+          color="#b9bfc9"
           position={[-6, -7, -3]}
           rotation={[Math.PI / 3, 0, 0]}
           scale={[14, 5, 1]}
@@ -136,7 +138,7 @@ export default function StudioEnv() {
           lighting renders too soft — and unlike the baked environment, these
           can move. */}
       <directionalLight ref={key} intensity={2.4} color="#fff4dd" />
-      <directionalLight ref={rim} intensity={0.55} color="#6f93cf" />
+      <directionalLight ref={rim} intensity={0.6} color="#c8cedb" />
     </>
   );
 }
