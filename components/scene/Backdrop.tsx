@@ -24,8 +24,8 @@ export default function Backdrop() {
         depthTest: false,
         toneMapped: false,
         uniforms: {
-          uCore: { value: new THREE.Color('#0a1838') },
-          uEdge: { value: new THREE.Color('#02040c') },
+          uCore: { value: new THREE.Color('#0f2148') },
+          uEdge: { value: new THREE.Color('#081128') },
         },
         vertexShader: /* glsl */ `
           varying vec3 vDir;
@@ -41,9 +41,10 @@ export default function Backdrop() {
           void main() {
             // Brightest straight ahead (-Z), falling off toward the periphery.
             float d = clamp(-vDir.z * 0.5 + 0.5, 0.0, 1.0);
-            // Steep falloff: a broad bright field flattens the frame and
-            // drowns the dust. This should read as depth, not as a lit wall.
-            float g = pow(d, 4.5);
+            // Gentle enough that the corners never crush to black — four dark
+            // patches read as a vignette artefact, not as space — but not so
+            // flat that the field becomes a painted blue wall with no depth.
+            float g = pow(d, 2.6);
             gl_FragColor = vec4(mix(uEdge, uCore, g), 1.0);
           }
         `,

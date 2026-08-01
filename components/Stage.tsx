@@ -7,7 +7,6 @@ import {
   ChromaticAberration,
   EffectComposer,
   ToneMapping,
-  Vignette,
 } from '@react-three/postprocessing';
 import { BlendFunction, ToneMappingMode } from 'postprocessing';
 import type { BloomEffect, ChromaticAberrationEffect } from 'postprocessing';
@@ -96,7 +95,6 @@ export default function Stage() {
           radialModulation={false}
           modulationOffset={0}
         />
-        <Vignette eskil={false} offset={0.3} darkness={0.55} />
         <ToneMapping mode={ToneMappingMode.ACES_FILMIC} />
       </EffectComposer>
 

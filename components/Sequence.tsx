@@ -3,9 +3,11 @@
 import { useEffect, useLayoutEffect, useRef } from 'react';
 import type Lenis from 'lenis';
 
+import * as audio from '@/lib/audio';
 import { gsap, ScrollTrigger } from '@/lib/gsap';
 import { timeline } from '@/lib/timeline';
 import ScrollCue from '@/components/ui/ScrollCue';
+import SoundToggle from '@/components/ui/SoundToggle';
 
 const useIsomorphicLayoutEffect = typeof window !== 'undefined' ? useLayoutEffect : useEffect;
 
@@ -35,6 +37,8 @@ export default function Sequence() {
     timeline.reducedMotion = reduced;
 
     const lenis = (window as unknown as { lenis?: Lenis }).lenis;
+
+    const cleanups: Array<() => void> = [];
 
     const ctx = gsap.context(() => {
       /* ============================================================
@@ -85,15 +89,36 @@ export default function Sequence() {
 
         // BEAT 2 · BIG BANG — detonation. The core scales past the camera and
         // swallows the frame; the shockwave and embers go out with it.
+        // The bell is struck on the frame the core blows, not after it: a bell
+        // heard late reads as a separate event rather than as the same one.
+        .add(() => audio.bell(392, 0.75, 1.3))
         .to(timeline, { bang: 1, duration: 1.0, ease: 'power2.out' })
 
         // BEAT 3 · REVEAL — the mantra materialises out of the residual glow.
         // It overlaps the tail of the explosion on purpose: the title should
         // emerge *from* the light, not appear after it has gone.
         .to(timeline, { reveal: 1, duration: 1.1, ease: 'power2.out' }, '-=0.55')
+        // A higher, softer strike as the mantra resolves out of the light.
+        .add(() => audio.bell(659.25, 0.4, 0.9), '-=0.35')
         // `live` flips in onComplete, which is what releases the mantra from
         // its parked position and unlocks scrolling.
         .to('[data-cue]', { opacity: 1, duration: 0.8 }, '-=0.5');
+
+      // The mantra sweeps past the lens: one shimmer, once. Keyed off apparent
+      // size rather than scroll position, so it fires when it *looks* like it is
+      // arriving regardless of viewport shape, and latched so scrubbing back and
+      // forth across the threshold cannot machine-gun it.
+      let swelled = false;
+      const watchSwell = () => {
+        if (!swelled && timeline.nearness > 0.72) {
+          swelled = true;
+          audio.swell(0.4);
+        } else if (swelled && timeline.nearness < 0.55) {
+          swelled = false;
+        }
+      };
+      gsap.ticker.add(watchSwell);
+      cleanups.push(() => gsap.ticker.remove(watchSwell));
 
       // Scrub handle. The opening is a ~3s event; under a software renderer a
       // screenshot costs longer than a beat, so sampling it on a wall clock
@@ -112,6 +137,7 @@ export default function Sequence() {
     }, root);
 
     return () => {
+      cleanups.forEach((fn) => fn());
       ctx.revert();
       lenis?.start();
     };
@@ -120,6 +146,7 @@ export default function Sequence() {
   return (
     <main ref={root} className="relative z-10 h-[420vh] w-full">
       <ScrollCue />
+      <SoundToggle />
     </main>
   );
 }

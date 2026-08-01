@@ -31,7 +31,7 @@ export default function PostRig({
       // Zero at rest, on purpose. Even a sub-pixel offset resamples a 1px
       // dust mote across channels and speckles the whole field magenta and
       // green. Aberration is a motion cue here, so it only exists in motion.
-      const smear = speed * 0.0018 + timeline.bang * 0.001;
+      const smear = speed * 0.0009 + timeline.bang * 0.0008;
       ca.current.offset.set(smear, smear * 0.6);
     }
 

@@ -149,6 +149,9 @@ Three more settings tuned the hard way, and why:
 - **Bloom threshold sits high (0.72).** Lower, and ACES tone mapping desaturates
   every blown pixel toward white — the scene stops reading as gold and becomes a
   monochrome starfield.
+- **No vignette.** One was crushing all four corners to near-black, which reads as
+  four dark patches rather than as space. The backdrop's own falloff does the job
+  more gently — but it must stay gentle, or the corners crush anyway.
 - **Chromatic aberration is zero at rest.** Even a sub-pixel offset resamples 1px
   dust motes across channels and speckles the field magenta and green. It is a
   motion cue, so it only exists in motion.
@@ -163,6 +166,32 @@ longer than a beat, so sampling the sequence on a wall clock silently drifts pas
 the explosion entirely. `window.__gl` / `window.__scene` expose renderer stats.
 
 ---
+
+## Sound
+
+`lib/audio.ts` synthesises everything with Web Audio — a temple bell, a tanpura-ish
+drone and a pass-through shimmer. **No audio file is downloaded**: nothing on the
+critical path, no licensing question over a recording, and every parameter is tunable
+in that one file.
+
+Bells are *inharmonic* — their partials are not integer multiples, which is precisely
+why a bell sounds like a bell and a stack of harmonics sounds like an organ. The
+classic bell ratios are used, each partial with its own decay so the highs die away
+first and the hum tone rings on underneath, plus a short filtered noise burst for the
+strike itself.
+
+**Browsers refuse to start audio until a user gesture, and a mouse-wheel scroll does
+not count.** So sound can never simply play on load alongside the big bang. Rather
+than fight that, the unlock *is* the moment: switching sound on strikes the bell right
+then, which makes the restriction read as intention. The toggle is visible from the
+start — a page that can make noise should say so before it makes any.
+
+Triggers: bell on the detonation frame, a higher softer bell as the mantra resolves,
+and a shimmer as it sweeps past the lens (latched off *apparent size*, so scrubbing
+back and forth across the threshold cannot machine-gun it).
+
+To use a real recorded chant instead, drop the file in `public/` and see the note at
+the bottom of `lib/audio.ts` — the trigger points and the toggle stay unchanged.
 
 ## Deployment
 
