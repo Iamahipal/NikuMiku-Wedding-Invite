@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1000" width="1600" height="1000" preserveAspectRatio="xMidYMid slice">
+  <!-- PLACEHOLDER — Layer 3 (foreground). Replace with heavily out-of-focus
+       marigold garlands / gold arch details shot at f/1.4. This layer lives in
+       front of the lens: it should always be blurred and always be moving
+       faster than everything else. -->
+  <defs>
+    <filter id="bokeh" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="16"/>
+    </filter>
+    <filter id="bokehSoft" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="12"/>
+    </filter>
+    <radialGradient id="petal" cx="0.4" cy="0.35" r="0.7">
+      <stop offset="0%" stop-color="#ffd98a"/>
+      <stop offset="60%" stop-color="#e8942c"/>
+      <stop offset="100%" stop-color="#8a3d12" stop-opacity="0.6"/>
+    </radialGradient>
+    <linearGradient id="archGold" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#f2c877" stop-opacity="0.75"/>
+      <stop offset="100%" stop-color="#8a6524" stop-opacity="0.25"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Gold arch framing the top of frame -->
+  <g filter="url(#bokehSoft)" opacity="0.75">
+    <path d="M-60 300C200 60 600-40 800-40s600 100 860 340v-360H-60z" fill="url(#archGold)" opacity="0.4"/>
+    <path d="M-60 300C200 60 600-40 800-40s600 100 860 340" fill="none" stroke="#f2c877" stroke-opacity="0.5" stroke-width="10"/>
+  </g>
+
+  <!-- Marigold garland, top -->
+  <g filter="url(#bokeh)">
+    <g fill="url(#petal)">
+      <circle cx="40" cy="54" r="46"/><circle cx="168" cy="18" r="34"/>
+      <circle cx="292" cy="70" r="50"/><circle cx="430" cy="16" r="28"/>
+      <circle cx="556" cy="58" r="38"/><circle cx="1006" cy="24" r="34"/>
+      <circle cx="1148" cy="74" r="52"/><circle cx="1302" cy="20" r="30"/>
+      <circle cx="1452" cy="66" r="46"/><circle cx="1576" cy="16" r="36"/>
+    </g>
+    <!-- Bottom garland -->
+    <g fill="url(#petal)" opacity="0.85">
+      <circle cx="70" cy="964" r="56"/><circle cx="252" cy="1004" r="42"/>
+      <circle cx="408" cy="958" r="34"/><circle cx="1156" cy="994" r="44"/>
+      <circle cx="1346" cy="950" r="60"/><circle cx="1524" cy="1000" r="40"/>
+    </g>
+  </g>
+
+  <!-- Stray bokeh points catching the light -->
+  <g filter="url(#bokehSoft)" opacity="0.5" fill="#f6e3ba">
+    <circle cx="740" cy="210" r="10"/>
+    <circle cx="900" cy="840" r="14"/>
+    <circle cx="250" cy="600" r="8"/>
+    <circle cx="1420" cy="520" r="12"/>
+  </g>
+</svg>

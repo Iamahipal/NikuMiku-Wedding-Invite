@@ -1,0 +1,77 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1000" width="1600" height="1000" preserveAspectRatio="xMidYMid slice">
+  <!-- PLACEHOLDER — Layer 1 (background). Replace with a wide, dark, slightly
+       de-focused photograph of the venue. Keep the subject low in frame and the
+       edges dark so it dissolves into the WebGL field. -->
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#050d24"/>
+      <stop offset="55%" stop-color="#0a1740"/>
+      <stop offset="100%" stop-color="#122250"/>
+    </linearGradient>
+    <linearGradient id="stone" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1b2c5e"/>
+      <stop offset="60%" stop-color="#0d1839"/>
+      <stop offset="100%" stop-color="#060c20"/>
+    </linearGradient>
+    <linearGradient id="rim" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#f2c877" stop-opacity="0.85"/>
+      <stop offset="100%" stop-color="#d9a441" stop-opacity="0"/>
+    </linearGradient>
+    <radialGradient id="moon" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0%" stop-color="#f6e3ba" stop-opacity="0.55"/>
+      <stop offset="100%" stop-color="#f6e3ba" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="edgeFade" cx="0.5" cy="0.55" r="0.72">
+      <stop offset="55%" stop-color="#fff" stop-opacity="1"/>
+      <stop offset="100%" stop-color="#fff" stop-opacity="0"/>
+    </radialGradient>
+    <mask id="fade"><rect width="1600" height="1000" fill="url(#edgeFade)"/></mask>
+  </defs>
+
+  <g mask="url(#fade)">
+    <rect width="1600" height="1000" fill="url(#sky)"/>
+    <circle cx="1180" cy="220" r="230" fill="url(#moon)"/>
+    <circle cx="1180" cy="220" r="52" fill="#f6e3ba" opacity="0.35"/>
+
+    <!-- Palace mass -->
+    <g fill="url(#stone)">
+      <rect x="180" y="560" width="1240" height="440"/>
+      <rect x="120" y="640" width="1360" height="360"/>
+      <!-- towers -->
+      <rect x="250" y="420" width="150" height="580"/>
+      <rect x="1200" y="420" width="150" height="580"/>
+      <rect x="690" y="330" width="220" height="670"/>
+      <!-- domes -->
+      <path d="M325 420c-70 0-100-70-100-110 0-60 45-110 100-110s100 50 100 110c0 40-30 110-100 110z"/>
+      <path d="M1275 420c-70 0-100-70-100-110 0-60 45-110 100-110s100 50 100 110c0 40-30 110-100 110z"/>
+      <path d="M800 330c-95 0-140-95-140-150 0-82 62-150 140-150s140 68 140 150c0 55-45 150-140 150z"/>
+      <!-- finials -->
+      <rect x="795" y="6" width="10" height="34" fill="#d9a441" opacity="0.7"/>
+      <rect x="320" y="176" width="8" height="26" fill="#d9a441" opacity="0.6"/>
+      <rect x="1270" y="176" width="8" height="26" fill="#d9a441" opacity="0.6"/>
+    </g>
+
+    <!-- Lit arches -->
+    <g opacity="0.55">
+      <path d="M470 1000V760a60 60 0 01120 0v240z" fill="url(#rim)" opacity="0.35"/>
+      <path d="M660 1000V760a60 60 0 01120 0v240z" fill="url(#rim)" opacity="0.35"/>
+      <path d="M850 1000V760a60 60 0 01120 0v240z" fill="url(#rim)" opacity="0.35"/>
+      <path d="M1040 1000V760a60 60 0 01120 0v240z" fill="url(#rim)" opacity="0.35"/>
+    </g>
+
+    <!-- Gold rim light along the silhouette -->
+    <g fill="none" stroke="#e8b24c" stroke-opacity="0.5" stroke-width="2">
+      <path d="M180 560h1240"/>
+      <path d="M690 330h220"/>
+      <path d="M250 420h150M1200 420h150"/>
+    </g>
+
+    <!-- Water reflection -->
+    <rect x="0" y="920" width="1600" height="80" fill="#0b1740" opacity="0.8"/>
+    <g opacity="0.18" fill="#e8b24c">
+      <rect x="300" y="940" width="240" height="2"/>
+      <rect x="760" y="962" width="300" height="2"/>
+      <rect x="1120" y="936" width="180" height="2"/>
+    </g>
+  </g>
+</svg>
