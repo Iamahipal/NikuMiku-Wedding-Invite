@@ -4,7 +4,7 @@ import type { RefObject } from 'react';
 import { useFrame } from '@react-three/fiber';
 import type { BloomEffect, ChromaticAberrationEffect } from 'postprocessing';
 
-import { timeline } from '@/lib/timeline';
+import { SHINE, shine, timeline } from '@/lib/timeline';
 
 /**
  * Per-frame post-processing modulation.
@@ -36,9 +36,19 @@ export default function PostRig({
     }
 
     if (bloom.current) {
-      // The explosion pushes bloom hard, then it settles back so the mantra
-      // stays legible rather than drowning in glow.
-      bloom.current.intensity = 0.85 + timeline.bang * 2.2 + speed * 0.5;
+      // THE SHINE CURVE (see lib/timeline.ts). Far away the mantra is a
+      // distant jewel and heavy bloom is what sells it. Close up the glow has
+      // to get out of the way: at readable size, bloom is the enemy of
+      // legibility, and blowing the faces to white destroys the very shading
+      // that makes the letterforms look solid.
+      const n = timeline.nearness;
+      bloom.current.intensity =
+        shine(SHINE.bloom, n) + timeline.bang * 2.2 + speed * 0.35;
+
+      // Raising the cut-off as it approaches means only true speculars bloom,
+      // leaving the mid-tones — the readable part — alone.
+      const target = shine(SHINE.threshold, n);
+      bloom.current.luminanceMaterial.threshold = target;
     }
   });
 

@@ -27,6 +27,10 @@ export type Timeline = {
   /** Ambient dust travel, independent of scroll so the field is never frozen. */
   drift: number;
 
+  /** How large the mantra reads on screen, 0 (speck) → 1 (at the lens).
+   *  Written by MantraMesh, read by PostRig to drive the shine curve. */
+  nearness: number;
+
   /** Set once the autoplay finishes and scrolling is unlocked. */
   live: boolean;
   reducedMotion: boolean;
@@ -40,6 +44,7 @@ export const timeline: Timeline = {
   approach: 0,
   velocity: 0,
   drift: 0,
+  nearness: 0,
   live: false,
   reducedMotion: false,
 };
@@ -68,6 +73,30 @@ export const APPROACH_SPAN = 0.85;
 export const READ_Z = -150;
 
 /**
+ * Reference distance and screen coverage used to normalise the mantra's size
+ * across viewport shapes.
+ *
+ * Without this the whole sequence is implicitly art-directed for one aspect
+ * ratio. A phone in portrait has a far narrower horizontal field of view than a
+ * laptop, so the same world-space geometry overflows the frame long before it
+ * becomes readable — the text is cropped to two or three letters exactly when
+ * the viewer is meant to be able to read it.
+ */
+export const FIT_Z = -140;
+export const FIT_COVERAGE = 0.78;
+
+/**
+ * Scale that makes the mantra occupy the same fraction of the screen on any
+ * device. Derived from the camera, so it is correct for every aspect ratio
+ * rather than tuned for two breakpoints.
+ */
+export function fitScale(fovDeg: number, aspect: number) {
+  const visibleH = 2 * Math.tan((fovDeg * Math.PI) / 360) * Math.abs(FIT_Z);
+  const visibleW = visibleH * aspect;
+  return (FIT_COVERAGE * visibleW) / MANTRA_WIDTH;
+}
+
+/**
  * Map scroll progress to the mantra's Z.
  *
  * The approach interpolates in *reciprocal* Z, not linear Z. Apparent size
@@ -89,6 +118,50 @@ export function mantraZ(t: number) {
   // Final beat: straight through the camera, fast.
   const k = (t - APPROACH_SPAN) / (1 - APPROACH_SPAN);
   return PASS_Z + (END_Z - PASS_Z) * k;
+}
+
+/**
+ * How large the mantra currently reads on screen: 0 when it is a distant speck,
+ * 1 when it is at the pass-through plane.
+ *
+ * Derived from apparent size (which goes as 1/z), NOT from scroll progress or
+ * from z directly — those are dominated by the huge far distances and would
+ * report "still tiny" long after it visibly fills half the frame. Every
+ * look-development curve in the scene is driven off this.
+ */
+export function nearness(z: number) {
+  const inv = 1 / Math.max(Math.abs(z), 1);
+  const invStart = 1 / Math.abs(START_Z);
+  const invEnd = 1 / Math.abs(PASS_Z);
+  return Math.min(1, Math.max(0, (inv - invStart) / (invEnd - invStart)));
+}
+
+/**
+ * THE SHINE PLAN
+ * --------------
+ * Far away the mantra should shine *more*: it is a distant jewel, and heavy
+ * bloom is what sells a small bright object at distance. Close up the shine
+ * must settle *down*: at readable size, glow is the enemy of legibility, and
+ * blowing the faces to white destroys exactly the shading that makes the
+ * letterforms look three-dimensional.
+ *
+ * So: glow high and loose when far, low and crisp when near. Everything below
+ * interpolates on that single idea.
+ */
+export const SHINE = {
+  /** Reflection strength — hotter far away, controlled close up. */
+  envIntensity: { far: 3.4, near: 1.9 },
+  /** Bloom amount. */
+  bloom: { far: 1.7, near: 0.42 },
+  /** Bloom cut-off: low when far (everything glows), high when near (only
+   *  genuine speculars glow, so the mid-tones stay readable). */
+  threshold: { far: 0.55, near: 0.9 },
+  /** Aura behind the mantra. */
+  aura: { far: 0.6, near: 0.05 },
+};
+
+export function shine(from: { far: number; near: number }, n: number) {
+  return from.far + (from.near - from.far) * n;
 }
 
 /** Frame-rate independent exponential damping. */

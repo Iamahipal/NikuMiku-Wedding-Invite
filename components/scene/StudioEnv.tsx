@@ -1,74 +1,142 @@
 'use client';
 
+import { useRef } from 'react';
 import { Environment, Lightformer } from '@react-three/drei';
+import { useFrame } from '@react-three/fiber';
+import * as THREE from 'three';
+
+import { timeline } from '@/lib/timeline';
 
 /**
- * The lighting rig.
+ * The lighting rig — and therefore about 80% of "does this look like gold".
  *
- * A metal surface has no diffuse response — it shows you nothing but its
- * environment. So the "gold look" is almost entirely this file, not the
- * material file.
+ * A metal has no diffuse response: it shows you nothing but its environment.
+ * So the look is made here, not in the material.
  *
- * The environment is built procedurally from Lightformers rather than loaded
- * from an HDRI. That is a deliberate call: drei's HDRI presets fetch several
- * megabytes from a CDN at runtime, which on a static GitHub Pages deploy means
- * a third-party dependency on the critical path of the opening shot. These
- * emissive rectangles cost nothing to download and are baked to a 256px cube
- * exactly once (`frames={1}`).
+ * THE RULE THAT MATTERS: a metal only reads as metal if large parts of it are
+ * DARK. A broad, evenly-bright environment lights every face to roughly the
+ * same value, the tone mapper pushes all of it toward white, and the result is
+ * a flat glowing blob with no form and no legibility. Reference gold — polished
+ * rings, film titles — is roughly half deep shadow, with saturated mid-tones
+ * and only narrow bright streaks.
+ *
+ * So this environment is mostly black, lit by a few very bright, very small
+ * shapes. High dynamic range, low coverage.
+ *
+ * The second ingredient is COOL light. Warm-only lighting gives warm-on-warm
+ * mush. A blue rim behind and a cool side fill push the silhouette edges toward
+ * steel-blue, which is what separates one letterform from the next and gives
+ * the gold something to be warm *against*.
  */
 export default function StudioEnv() {
+  const key = useRef<THREE.DirectionalLight>(null);
+  const rim = useRef<THREE.DirectionalLight>(null);
+
+  useFrame(({ clock }) => {
+    const t = clock.elapsedTime;
+    // The punctual lights orbit slowly and never stop. This is the single
+    // biggest "alive" factor: highlights travel across the bevels continuously,
+    // so the mantra breathes even when the viewer isn't scrolling at all.
+    // (The Environment itself is baked once and cannot move — hence doing it
+    // with punctual lights, which are free.)
+    if (key.current) {
+      key.current.position.set(
+        Math.sin(t * 0.22) * 9 + 3,
+        6 + Math.sin(t * 0.17) * 2.5,
+        8 + Math.cos(t * 0.19) * 3,
+      );
+    }
+    if (rim.current) {
+      rim.current.position.set(
+        Math.sin(t * 0.15 + 2.1) * -11,
+        -3 + Math.cos(t * 0.21) * 2,
+        -6 + Math.sin(t * 0.13) * 3,
+      );
+    }
+  });
+
   return (
     <>
       <Environment resolution={256} frames={1}>
-        {/* Deep blue-black surround, so unlit facets read as royal rather than dead. */}
+        {/* Dark *warm* surround, not black. The unlit regions of a gold surface
+            are deep brown, not void — a black surround drains the colour out of
+            the shadows and the whole thing turns to gunmetal. */}
         <mesh scale={100}>
           <sphereGeometry args={[1, 32, 32]} />
-          <meshBasicMaterial color="#050b1e" side={1} />
+          <meshBasicMaterial color="#1c1408" side={THREE.BackSide} />
         </mesh>
 
-        {/* Key — broad and soft, from above-front. Fills the faces. */}
+        {/* Broad warm field. The flat faces of the letterforms reflect a wide
+            solid angle; this is what they pick up, and it is where the body
+            colour of the gold actually comes from. */}
         <Lightformer
           form="rect"
-          intensity={3.2}
-          color="#fff3d6"
-          position={[0, 8, 10]}
-          rotation={[-Math.PI / 6, 0, 0]}
-          scale={[24, 14, 1]}
+          intensity={2.35}
+          color="#ffb85e"
+          position={[0, 2, 14]}
+          scale={[26, 18, 1]}
         />
 
-        {/* Rim — behind the mantra, separates its silhouette from the void. */}
+        {/* --- WARM: small and very bright. These make the streaks. --- */}
+        <Lightformer
+          form="rect"
+          intensity={16}
+          color="#fff0d0"
+          position={[-9, 5, 8]}
+          rotation={[0, Math.PI / 2.6, 0]}
+          scale={[9, 1.1, 1]}
+        />
+        <Lightformer
+          form="rect"
+          intensity={10}
+          color="#ffd08a"
+          position={[10, -3, 6]}
+          rotation={[0, -Math.PI / 2.6, 0]}
+          scale={[8, 0.8, 1]}
+        />
+        <Lightformer
+          form="circle"
+          intensity={7}
+          color="#ffe6b8"
+          position={[0, 9, 4]}
+          rotation={[-Math.PI / 2, 0, 0]}
+          scale={[4, 4, 1]}
+        />
+
+        {/* --- COOL: the edge separation. Without these the gold is
+            warm-on-warm and the letterforms merge into one another. --- */}
         <Lightformer
           form="ring"
-          intensity={5}
-          color="#ffd27a"
-          position={[0, 0, -18]}
-          scale={[14, 14, 1]}
+          intensity={2.4}
+          color="#4a72ad"
+          position={[0, 0, -16]}
+          scale={[13, 13, 1]}
+        />
+        <Lightformer
+          form="rect"
+          intensity={1.1}
+          color="#8fa5c9"
+          position={[-6, -7, -3]}
+          rotation={[Math.PI / 3, 0, 0]}
+          scale={[14, 5, 1]}
         />
 
-        {/* Two rakers. These are the ones that matter: narrow vertical strips
-            whose reflections slide across the bevels as the mantra yaws. */}
+        {/* Dim warm floor bounce, so the darks are rich rather than dead. */}
         <Lightformer
           form="rect"
-          intensity={6}
-          color="#ffffff"
-          position={[-12, 2, 6]}
-          rotation={[0, Math.PI / 2.4, 0]}
-          scale={[16, 2.2, 1]}
-        />
-        <Lightformer
-          form="rect"
-          intensity={4.5}
-          color="#ffdca8"
-          position={[12, -2, 6]}
-          rotation={[0, -Math.PI / 2.4, 0]}
-          scale={[16, 1.6, 1]}
+          intensity={0.75}
+          color="#8a5e12"
+          position={[0, -9, 2]}
+          rotation={[Math.PI / 2, 0, 0]}
+          scale={[18, 10, 1]}
         />
       </Environment>
 
-      {/* Punctual lights on top of the environment: these give the crisp,
-          small specular hits that a purely image-based rig renders too soft. */}
-      <directionalLight position={[6, 10, 8]} intensity={2.2} color="#fff6e2" />
-      <directionalLight position={[-8, -4, 4]} intensity={0.9} color="#e8b24c" />
+      {/* Punctual lights give the crisp small speculars that image-based
+          lighting renders too soft — and unlike the baked environment, these
+          can move. */}
+      <directionalLight ref={key} intensity={2.4} color="#fff4dd" />
+      <directionalLight ref={rim} intensity={0.55} color="#6f93cf" />
     </>
   );
 }

@@ -95,6 +95,36 @@ the scroll and then exploding in the last few percent.
 
 ---
 
+## The shine plan, and why it goes *down* as it approaches
+
+Codified in `SHINE` (`lib/timeline.ts`) and driven by `nearness()` — a 0→1 measure
+of how large the mantra reads on screen, derived from apparent size (which goes as
+1/z), not from scroll progress.
+
+**Far away it shines more; close up the shine settles.** A distant speck needs heavy
+bloom to read as a jewel. At readable size glow becomes the enemy: it blows the
+faces to white and destroys the very shading that makes the letterforms look solid.
+So reflections, bloom amount and the bloom cut-off all interpolate on that one idea,
+and the aura behind the text fades out as it arrives.
+
+## Orientation: turned when far, square when readable
+
+The mantra is yawed while distant — a turned object announces that it has depth.
+But that same yaw is ruinous at size: the near end swells and blows out while the
+far end shrinks into darkness, and the word stops being readable. The turn is
+therefore fully spent by `nearness ≈ 0.11`, which is where the text becomes legible.
+From there it is square to camera and the 3D reads from bevels, side walls and
+travelling highlights instead.
+
+## Framing is normalised to the viewport
+
+`fitScale()` sizes the mantra from the camera's own FOV and aspect so it occupies the
+same fraction of the screen on any device. Without it the sequence is implicitly
+art-directed for one aspect ratio: a phone in portrait has a far narrower horizontal
+field of view, so the same geometry overflows the frame long before it is readable —
+the text gets cropped to two or three letters at exactly the moment you are meant to
+read it.
+
 ## Look development notes
 
 Most of the "gold" is `StudioEnv.tsx`, not the material — metal has no diffuse
@@ -103,7 +133,18 @@ response, so it shows you nothing but its environment. The rig is built from
 presets fetch megabytes from a CDN, which is a third-party dependency on the
 critical path of the opening shot.
 
-Three settings that were tuned the hard way, and why:
+**A metal only reads as metal if large parts of it are dark.** A broad, evenly-bright
+environment lights every face to the same value, the tone mapper pushes it toward
+white, and you get a flat glowing blob. Reference gold is roughly half deep shadow.
+But the surround must be dark *warm*, not black — a black surround drains the colour
+out of the shadows and the whole thing turns to gunmetal.
+
+**Cool light is what separates the letterforms.** Warm-only lighting gives
+warm-on-warm mush. A blue rim behind, a cool side fill, and a little `iridescence`
+push the silhouette edges toward steel-blue, which gives the gold something to be
+warm against.
+
+Three more settings tuned the hard way, and why:
 
 - **Bloom threshold sits high (0.72).** Lower, and ACES tone mapping desaturates
   every blown pixel toward white — the scene stops reading as gold and becomes a
