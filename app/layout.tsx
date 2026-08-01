@@ -4,7 +4,7 @@ import { Cormorant_Garamond, Inter, Tiro_Devanagari_Hindi } from 'next/font/goog
 import SmoothScroll from '@/components/SmoothScroll';
 import WebGLBackground from '@/components/webgl/WebGLBackground';
 import Atmosphere from '@/components/ui/Atmosphere';
-import Preloader from '@/components/ui/Preloader';
+import Overture from '@/components/ui/Overture';
 import ScrollProgress from '@/components/ui/ScrollProgress';
 import { couple } from '@/lib/wedding';
 
@@ -67,9 +67,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         {/* LAYER 2 — the DOM. Lenis wraps it so every scroll has inertia. */}
         <SmoothScroll>{children}</SmoothScroll>
 
-        {/* LAYER 3 — persistent chrome. */}
+        {/* LAYER 3 — persistent chrome, and the opening title sequence. */}
         <ScrollProgress />
-        <Preloader />
+        <Overture />
       </body>
     </html>
   );

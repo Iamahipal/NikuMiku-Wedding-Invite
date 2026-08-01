@@ -5,7 +5,7 @@ import { useRef } from 'react';
 import { gsap, ScrollTrigger, SplitText } from '@/lib/gsap';
 import { scrollState, TRAVEL_DISTANCE } from '@/lib/scroll-state';
 import { useIsomorphicLayoutEffect } from '@/lib/useIsomorphicLayoutEffect';
-import { ENTER_EVENT } from '@/components/ui/Preloader';
+import { ENTER_EVENT } from '@/components/ui/Overture';
 
 import Hero from '@/components/scenes/Hero';
 import Invocation from '@/components/scenes/Invocation';
@@ -61,6 +61,12 @@ export default function ScrollJourney() {
           // This one starts at opacity 0 in CSS because its reveal normally
           // comes from SplitText's onSplit — which never runs on this branch.
           gsap.set('[data-parallax-headline]', { opacity: 1 });
+          // The invocation's arrival lives in the overture timeline, which
+          // this branch never builds.
+          gsap.set(
+            '[data-invocation-mantra], [data-invocation-sub], [data-invocation-glow]',
+            { opacity: 1, scale: 1, filter: 'none' },
+          );
           return;
         }
 
@@ -92,34 +98,59 @@ export default function ScrollJourney() {
         });
 
         /* ==============================================================
-         * SCENE 01 — THE HOOK
-         * ============================================================== */
-
-        // Masked line reveal. The names rise out of their overflow boxes as
-        // whole words — see the note in Hero.tsx for why they must not be
-        // split into per-character spans.
-        const intro = gsap
-          .timeline({ paused: true, defaults: { ease: 'expo.out' } })
-          .from('[data-hero-line]', {
-            yPercent: 115,
-            duration: 1.7,
-            stagger: 0.14,
+         * SCENE 01 — THE INVOCATION (the title card)
+         * ==============================================================
+         * ARRIVAL is not scroll-linked. The Overture's spark blooms past the
+         * lens and this timeline is cued off that same moment, so the mantra
+         * comes out of the light itself: from a speck in deep space, heavily
+         * defocused, rushing forward until it fills the frame. `expo.out`
+         * over two seconds is what makes it read as *distance closing* rather
+         * than a box scaling up — nearly all the travel happens in the first
+         * third, then it decelerates into place like something with mass.
+         */
+        const overture = gsap
+          .timeline({ paused: true })
+          .fromTo(
+            '[data-invocation-mantra]',
+            { scale: 0.035, opacity: 0, filter: 'blur(30px)' },
+            {
+              scale: isDesktop ? 1.06 : 1.02,
+              opacity: 1,
+              filter: 'blur(0px)',
+              duration: 2.1,
+              ease: 'expo.out',
+            },
+            0,
+          )
+          // A breath of overshoot settling back — the landing.
+          .to('[data-invocation-mantra]', {
+            scale: 1,
+            duration: 1.1,
+            ease: 'power2.out',
           })
-          .to('[data-hero-eyebrow]', { opacity: 1, y: 0, duration: 1.2 }, 0.15)
-          .to('[data-hero-amp]', { opacity: 1, y: 0, duration: 1 }, 0.75)
-          .to('[data-hero-rule]', { width: '14rem', duration: 1.6 }, 0.9)
-          .to('[data-hero-meta]', { opacity: 1, y: 0, duration: 1.2 }, 1.05)
-          .to('[data-hero-cue]', { opacity: 1, y: 0, duration: 1 }, 1.3);
+          .fromTo(
+            '[data-invocation-glow]',
+            { scale: 0.12, opacity: 0 },
+            { scale: 1, opacity: 1, duration: 2.4, ease: 'expo.out' },
+            0,
+          )
+          .fromTo(
+            '[data-invocation-sub]',
+            { opacity: 0, y: 34 },
+            { opacity: 1, y: 0, duration: 1.3, ease: 'expo.out' },
+            1.5,
+          )
+          .to('[data-invocation-cue]', { opacity: 1, duration: 1 }, 2.1);
 
-        // The preloader hands over when its curtain clears; the delayed call
-        // is a safety net in case the event never fires.
-        const playIntro = () => intro.play();
-        window.addEventListener(ENTER_EVENT, playIntro, { once: true });
-        const introFallback = gsap.delayedCall(4.5, playIntro);
+        const playOverture = () => overture.play();
+        window.addEventListener(ENTER_EVENT, playOverture, { once: true });
+        // Safety net: the title must never be stranded off-screen if the
+        // Overture is skipped, removed, or errors before it can dispatch.
+        const overtureFallback = gsap.delayedCall(5, playOverture);
 
         // Looping scroll cue.
         gsap.fromTo(
-          '[data-hero-cue-fill]',
+          '[data-invocation-cue-fill]',
           { yPercent: -110 },
           {
             yPercent: 320,
@@ -130,81 +161,68 @@ export default function ScrollJourney() {
           },
         );
 
-        // Exit: the hero doesn't scroll away, it recedes into the dust.
-        gsap
-          .timeline({
-            scrollTrigger: {
-              trigger: '[data-scene="hero"]',
-              start: 'top top',
-              end: 'bottom top',
-              scrub: 0.6,
-            },
-          })
-          .to(
-            '[data-hero-content]',
-            {
-              yPercent: -14,
-              scale: 0.92,
-              opacity: 0,
-              filter: 'blur(7px)',
-              ease: 'power1.in',
-            },
-            0,
-          )
-          .to('[data-hero-cue]', { opacity: 0, y: 20, ease: 'none', duration: 0.35 }, 0);
-
-        /* ==============================================================
-         * SCENE 02 — THE INVOCATION
-         * ==============================================================
-         * One scrubbed timeline across the full 180vh section: the mantra
-         * arrives huge, blurred and unlit, resolves to centre frame, then
-         * shrinks and lifts away as the flight continues past it.
-         */
+        // DEPARTURE is scroll-linked: the mantra shrinks back into the dust
+        // it came from. These are `.to()` tweens, which do not immediateRender,
+        // so they cannot stomp the arrival's start state on load.
         gsap
           .timeline({
             scrollTrigger: {
               trigger: '[data-scene="invocation"]',
-              start: 'top bottom',
+              start: 'top top',
               end: 'bottom top',
-              scrub: 0.8,
+              scrub: 0.7,
             },
             defaults: { ease: 'none' },
           })
-          // ---- arrival (first half of the section)
-          .fromTo(
-            '[data-invocation-mantra]',
-            { scale: 1.45 * (isDesktop ? 1 : 0.9), opacity: 0, y: 70, filter: 'blur(16px)' },
-            { scale: 1, opacity: 1, y: 0, filter: 'blur(0px)', duration: 1 },
-            0,
-          )
-          .fromTo(
-            '[data-invocation-glow]',
-            { scale: 0.4, opacity: 0 },
-            { scale: 1, opacity: 1, duration: 1 },
-            0,
-          )
-          .fromTo(
-            '[data-invocation-sub]',
-            { opacity: 0, y: 40 },
-            { opacity: 1, y: 0, duration: 0.55 },
-            0.45,
-          )
-          // ---- departure (second half)
           .to(
             '[data-invocation-mantra]',
-            { scale: 0.6, opacity: 0, y: -160, filter: 'blur(9px)', duration: 1 },
-            1,
+            { scale: 0.5, opacity: 0, y: -150, filter: 'blur(11px)' },
+            0,
           )
-          .to('[data-invocation-glow]', { scale: 0.3, opacity: 0, duration: 0.8 }, 1)
-          .to('[data-invocation-sub]', { opacity: 0, y: -90, duration: 0.7 }, 1);
+          .to('[data-invocation-glow]', { scale: 0.25, opacity: 0 }, 0)
+          .to('[data-invocation-sub]', { opacity: 0, y: -90 }, 0)
+          .to('[data-invocation-cue]', { opacity: 0, duration: 0.25 }, 0);
 
-        // Dim the dust so the Devanagari reads cleanly, then bring it back.
+        /* ==============================================================
+         * SCENE 02 — THE TWO
+         * ==============================================================
+         * Now that the invocation opens the film, the names are revealed on
+         * approach instead of on load. Masked line reveal — see the note in
+         * Hero.tsx for why these must not be split into per-character spans.
+         */
+        gsap
+          .timeline({
+            scrollTrigger: { trigger: '[data-scene="hero"]', start: 'top 75%', once: true },
+            defaults: { ease: 'expo.out' },
+          })
+          .from('[data-hero-line]', { yPercent: 115, duration: 1.7, stagger: 0.14 })
+          .to('[data-hero-eyebrow]', { opacity: 1, y: 0, duration: 1.2 }, 0.15)
+          .to('[data-hero-amp]', { opacity: 1, y: 0, duration: 1 }, 0.75)
+          .to('[data-hero-rule]', { width: '14rem', duration: 1.6 }, 0.9)
+          .to('[data-hero-meta]', { opacity: 1, y: 0, duration: 1.2 }, 1.05);
+
+        // The dust warms back up once the mantra has gone.
         ScrollTrigger.create({
-          trigger: '[data-scene="invocation"]',
-          start: 'top 60%',
-          end: 'bottom 40%',
+          trigger: '[data-scene="hero"]',
+          start: 'top 80%',
+          end: 'bottom top',
           onToggle: (self) => {
-            scrollState.intensityTarget = self.isActive ? 0.55 : 1;
+            scrollState.intensityTarget = self.isActive ? 1 : 0.85;
+          },
+        });
+
+        // Exit: the names don't scroll away, they recede into the dust.
+        gsap.to('[data-hero-content]', {
+          yPercent: -14,
+          scale: 0.92,
+          opacity: 0,
+          filter: 'blur(7px)',
+          ease: 'power1.in',
+          scrollTrigger: {
+            trigger: '[data-scene="hero"]',
+            start: 'top top',
+            end: 'bottom top',
+            scrub: 0.6,
           },
         });
 
@@ -460,8 +478,8 @@ export default function ScrollJourney() {
         // matchMedia cleanup: everything created above is reverted for us;
         // these are the few things GSAP can't know about.
         return () => {
-          window.removeEventListener(ENTER_EVENT, playIntro);
-          introFallback.kill();
+          window.removeEventListener(ENTER_EVENT, playOverture);
+          overtureFallback.kill();
           if (sway) gsap.ticker.remove(sway);
           captionSplit.revert();
         };
@@ -473,8 +491,8 @@ export default function ScrollJourney() {
 
   return (
     <main ref={root} className="relative z-10 w-full">
-      <Hero />
       <Invocation />
+      <Hero />
       <ParallaxCutout />
       <EventsHorizontal />
       <Rsvp />

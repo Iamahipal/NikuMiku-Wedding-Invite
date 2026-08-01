@@ -1,7 +1,9 @@
 import { couple } from '@/lib/wedding';
 
 /**
- * SCENE 01 — The Hook.
+ * SCENE 02 — The Two.
+ *
+ * The names, revealed once the invocation has lifted away.
  *
  * Pure markup. Every hook GSAP needs is a `data-*` attribute; no animation
  * logic lives here, so the scene can be re-art-directed without touching the
@@ -69,18 +71,6 @@ export default function Hero() {
         </p>
       </div>
 
-      {/* Scroll invitation — the only instruction the film ever gives. */}
-      <div
-        data-hero-cue
-        className="anim-hidden absolute bottom-14 flex flex-col items-center gap-3"
-      >
-        <span className="font-body text-[9px] uppercase tracking-[0.4em] text-gold/50">
-          Scroll
-        </span>
-        <span className="relative block h-14 w-px overflow-hidden bg-gold/15">
-          <span data-hero-cue-fill className="absolute inset-x-0 top-0 h-1/3 bg-gold/80" />
-        </span>
-      </div>
     </section>
   );
 }

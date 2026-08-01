@@ -47,7 +47,8 @@ interrupt the flight or drop a frame on a pinned section.
  ├── SmoothScroll         ——     Lenis, driven off the GSAP ticker
  │    └── <main>          z-10   ScrollJourney: all five scenes
  ├── ScrollProgress       z-40   chapter rail
- └── Preloader            z-100  curtain; hands over via the `invitation:enter` event
+ └── Overture             z-100  spark title sequence; cues the mantra via
+                                 the `invitation:enter` event
 </body>
 ```
 
@@ -104,11 +105,25 @@ and split in one call.
 
 | # | Scene | Motion |
 | --- | --- | --- |
-| 01 | **The Hook** | Masked line reveal on the names; on scroll the hero recedes — scale down, blur up, fade — rather than scrolling away. |
-| 02 | **The Invocation** | `ॐ गं गणपतये नमः` in a sticky frame: arrives huge/blurred/unlit, resolves to centre, then shrinks and lifts away. Dust dims to 55% so the Devanagari reads. |
+| 00 | **The Overture** | Black frame. A golden spark ignites dead centre with anamorphic flare streaks, flickers like a candle catching, then rushes the lens in a bloom of light, throwing embers. Not scroll-linked — it is the first four seconds. |
+| 01 | **The Invocation** | `ॐ गं गणपतये नमः` arrives *out of* that bloom: from a speck in deep space, blurred to 30px, rushing forward on `expo.out` until it fills the frame and settles. Scrolling only takes it away. |
+| 02 | **The Two** | The names, revealed on approach — masked line reveal; on scroll they recede (scale down, blur up, fade) rather than scrolling away. |
 | 03 | **Parallax Cutout** | Three layers, differential `yPercent` (16 / 28 / 104 units) + per-layer pointer sway at different amplitudes. |
 | 04 | **Celebrations** | Pinned section, track translated on X by vertical progress; per-card entrance driven by `containerAnimation`; dust drifts sideways and warps. |
 | 05 | **RSVP** | Vertical scroll resumes, dust warms to 125%, form staggers in over the same continuous field. |
+
+### The opening handover
+
+The Overture owns only the veil and the spark; the mantra belongs to the Invocation
+scene and is animated by ScrollJourney. The two are stitched by `ENTER_EVENT`, dispatched
+*mid-bloom* rather than at the end — so the title is already flying toward the viewer
+while the veil is still clearing. It reads as one continuous move instead of a loader
+that finishes and hands over. ScrollJourney also arms a `delayedCall` fallback, so the
+title can never be stranded off-screen if the Overture is removed or fails to dispatch.
+
+Webfonts are awaited silently behind the black frame (no counter, no progress bar), with
+a 2.5s cap so a slow CDN can't stall the film. Devanagari must never flash in a fallback
+face before it flies.
 
 ### Reduced motion
 
@@ -140,7 +155,7 @@ service.
 
 ---
 
-## Gotcha worth knowing
+## Gotchas worth knowing
 
 The gold-foil headings use `background-clip: text` with a transparent fill. **Do not run
 SplitText (or any per-letter wrapper) on them** — splitting moves the glyphs into child
@@ -148,3 +163,13 @@ spans that own no background, and transparent fill over no background renders li
 nothing. That is why the hero names are revealed as masked whole words, while the
 flat-coloured parallax caption is the element that gets the SplitText line treatment
 (with `autoSplit: true`, so it re-splits when the webfont loads or the wrap changes).
+
+**A `yoyo` tween returns to whatever value it captured on its first render.** The spark's
+flicker originally overlapped its ignition fade, so it captured a mid-fade opacity and
+left the spark stranded at 81% brightness for the rest of the sequence. Start yoyo tweens
+*after* whatever sets their baseline.
+
+**Anything GSAP animates in from nothing must start hidden in CSS**, not just in the
+timeline — between first paint and hydration there is no GSAP, and un-animated elements
+flash at full opacity. That is why the spark, embers, mantra and aura all carry
+`opacity-0` in markup.
