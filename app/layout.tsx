@@ -1,45 +1,24 @@
 import type { Metadata, Viewport } from 'next';
-import { Cormorant_Garamond, Inter, Tiro_Devanagari_Hindi } from 'next/font/google';
+import { Inter } from 'next/font/google';
 
 import SmoothScroll from '@/components/SmoothScroll';
-import WebGLBackground from '@/components/webgl/WebGLBackground';
-import Atmosphere from '@/components/ui/Atmosphere';
-import Overture from '@/components/ui/Overture';
-import ScrollProgress from '@/components/ui/ScrollProgress';
-import { couple } from '@/lib/wedding';
+import Stage from '@/components/Stage';
 
 import './globals.css';
 
-const cormorant = Cormorant_Garamond({
-  subsets: ['latin'],
-  weight: ['300', '400', '500', '600', '700'],
-  style: ['normal', 'italic'],
-  variable: '--font-cormorant',
-  display: 'swap',
-});
-
+// Only a UI sans is loaded. The mantra is geometry, not text — so no
+// Devanagari webfont ships at all, and the font-loading race that used to gate
+// the opening is simply gone.
 const inter = Inter({
   subsets: ['latin'],
-  weight: ['300', '400', '500'],
+  weight: ['300', '400'],
   variable: '--font-inter',
   display: 'swap',
 });
 
-const tiro = Tiro_Devanagari_Hindi({
-  subsets: ['devanagari', 'latin'],
-  weight: ['400'],
-  variable: '--font-tiro',
-  display: 'swap',
-});
-
 export const metadata: Metadata = {
-  title: `${couple.bride} & ${couple.groom} — ${couple.date}`,
-  description: `An invitation to the wedding of ${couple.bride} and ${couple.groom}. ${couple.city}, ${couple.date}.`,
-  openGraph: {
-    title: `${couple.bride} & ${couple.groom}`,
-    description: `${couple.city} · ${couple.date}`,
-    type: 'website',
-  },
+  title: 'ॐ गं गणपतये नमः',
+  description: 'An invocation, in gold.',
 };
 
 export const viewport: Viewport = {
@@ -49,27 +28,14 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html
-      lang="en"
-      className={`${cormorant.variable} ${inter.variable} ${tiro.variable}`}
-      suppressHydrationWarning
-    >
-      <body className="relative bg-void antialiased">
-        {/*
-          LAYER 0 — the WebGL film. One fixed canvas, mounted once, never
-          unmounted, never re-rendered by scroll. Everything else floats above it.
-        */}
-        <WebGLBackground />
+    <html lang="en" className={inter.variable} suppressHydrationWarning>
+      <body className="relative bg-void">
+        {/* The film. One fixed canvas, mounted once, never unmounted. */}
+        <div className="pointer-events-none fixed inset-0 z-0">
+          <Stage />
+        </div>
 
-        {/* LAYER 1 — atmospheric CSS grading: vignette, bloom wash, film grain. */}
-        <Atmosphere />
-
-        {/* LAYER 2 — the DOM. Lenis wraps it so every scroll has inertia. */}
         <SmoothScroll>{children}</SmoothScroll>
-
-        {/* LAYER 3 — persistent chrome, and the opening title sequence. */}
-        <ScrollProgress />
-        <Overture />
       </body>
     </html>
   );

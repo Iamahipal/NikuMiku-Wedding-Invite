@@ -1,37 +1,19 @@
 @import 'tailwindcss';
 
-/* ------------------------------------------------------------------
-   Design tokens — Tailwind v4 CSS-first config.
-   Royal midnight blues, metallic gold, champagne highlights.
------------------------------------------------------------------- */
 @theme {
   --color-void: #02040c;
   --color-midnight: #050b1e;
-  --color-royal: #071133;
-  --color-royal-lift: #0b1c4d;
-  --color-indigo-haze: #1b2a63;
-
   --color-gold: #d9a441;
   --color-gold-bright: #f2c877;
   --color-gold-pale: #f6e3ba;
-  --color-champagne: #ebc77c;
-  --color-bronze: #8a6524;
 
-  --font-display: var(--font-cormorant), 'Cormorant Garamond', ui-serif, Georgia, serif;
   --font-body: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
-  --font-deva: var(--font-tiro), 'Tiro Devanagari Hindi', ui-serif, serif;
-
-  --ease-cine: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* ------------------------------------------------------------------
-   Base
------------------------------------------------------------------- */
 @layer base {
   html {
-    /* Lenis owns the scroll. Native smooth scrolling must stay off. */
+    /* Lenis owns the scroll. */
     scroll-behavior: auto;
-    -webkit-text-size-adjust: 100%;
   }
 
   body {
@@ -40,7 +22,6 @@
     font-family: var(--font-body);
     overflow-x: hidden;
     -webkit-font-smoothing: antialiased;
-    text-rendering: optimizeLegibility;
   }
 
   ::selection {
@@ -48,109 +29,14 @@
     color: var(--color-void);
   }
 
-  /* The invitation is a film — no scrollbar chrome in the frame. */
-  ::-webkit-scrollbar {
-    width: 0;
-    height: 0;
-  }
-  html {
-    scrollbar-width: none;
-  }
-
-  input,
-  textarea,
-  select,
-  button {
-    font: inherit;
-    color: inherit;
-  }
+  /* This is a film — no scrollbar chrome in the frame. */
+  ::-webkit-scrollbar { width: 0; height: 0; }
+  html { scrollbar-width: none; }
 }
 
-/* ------------------------------------------------------------------
-   Lenis
------------------------------------------------------------------- */
-html.lenis,
-html.lenis body {
-  height: auto;
-}
-.lenis.lenis-smooth {
-  scroll-behavior: auto !important;
-}
-.lenis.lenis-smooth [data-lenis-prevent] {
-  overscroll-behavior: contain;
-}
-.lenis.lenis-stopped {
-  overflow: hidden;
-}
-
-/* ------------------------------------------------------------------
-   Utilities
------------------------------------------------------------------- */
-@utility text-gold-foil {
-  background: linear-gradient(
-    100deg,
-    #8a6524 0%,
-    #d9a441 18%,
-    #f6e3ba 34%,
-    #f2c877 46%,
-    #a97c2c 62%,
-    #f6e3ba 80%,
-    #d9a441 100%
-  );
-  background-size: 220% 100%;
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  -webkit-text-fill-color: transparent;
-}
-
-@utility glass-card {
-  background: linear-gradient(
-    155deg,
-    rgba(23, 40, 96, 0.42) 0%,
-    rgba(6, 13, 38, 0.58) 55%,
-    rgba(3, 7, 22, 0.72) 100%
-  );
-  backdrop-filter: blur(18px) saturate(130%);
-  -webkit-backdrop-filter: blur(18px) saturate(130%);
-  border: 1px solid rgba(217, 164, 65, 0.28);
-  box-shadow:
-    inset 0 1px 0 rgba(246, 227, 186, 0.16),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.4),
-    0 30px 80px -30px rgba(0, 0, 0, 0.9);
-}
-
-@utility hairline {
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(217, 164, 65, 0.55) 22%,
-    rgba(246, 227, 186, 0.9) 50%,
-    rgba(217, 164, 65, 0.55) 78%,
-    transparent
-  );
-}
-
-/* Elements the entrance timelines animate in. Hidden up-front so there is
-   never a flash of unstyled, un-animated content before GSAP takes over. */
-@utility anim-hidden {
-  opacity: 0;
-  will-change: transform, opacity;
-}
-
-/* ------------------------------------------------------------------
-   Accessibility
------------------------------------------------------------------- */
 @media (prefers-reduced-motion: reduce) {
-  .anim-hidden {
-    opacity: 1 !important;
-    transform: none !important;
-  }
-  *,
-  *::before,
-  *::after {
+  *, *::before, *::after {
     animation-duration: 0.001ms !important;
-    animation-iteration-count: 1 !important;
     transition-duration: 0.001ms !important;
   }
 }

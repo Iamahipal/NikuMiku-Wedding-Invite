@@ -1,10 +1,9 @@
-# Niku &amp; Miku — Cinematic Wedding Invitation
+# The Overture — ॐ गं गणपतये नमः in 3D gold
 
-A scroll-driven, single-shot digital wedding invitation. Royal midnight blue, metallic
-gold, and one continuous WebGL dust field that the entire page flies through.
-
-Benchmarks for feel: `landonorris.com` (layered cutout parallax, pinned horizontal acts)
-and `shopify.com/editions` (weighted inertia, scene-linked background motion).
+A cinematic opening title: a golden spark ignites in the void, detonates past the
+camera, and the Ganesh mantra arrives out of the light — as **real extruded gold
+geometry** — then rushes forward until the camera flies straight through the
+letterforms.
 
 **Live:** https://iamahipal.github.io/NikuMiku-Wedding-Invite/
 
@@ -13,163 +12,123 @@ npm install
 npm run dev        # http://localhost:3000
 npm run build      # static export -> ./out
 npm run preview    # serve the built export
-npm run typecheck  # tsc --noEmit
+npm run typecheck
 ```
 
-## Deployment
+> This is deliberately the *only* thing the site does right now. The rest of the
+> invitation will be rebuilt around this opening once the look is signed off.
 
-`.github/workflows/deploy.yml` builds and publishes to GitHub Pages on every push to
-`claude/wedding-invitation-cinematic-wr6ii7`. The site is a fully pre-rendered static
-export (`output: 'export'`), so it needs no server and could equally be dropped on any
-CDN or bucket.
+---
 
-One thing to know if you move it: a GitHub **project** page is served from
-`https://<user>.github.io/<repo>/`, so the build needs that prefix baked in. The workflow
-passes it as `NEXT_PUBLIC_BASE_PATH`. Next rewrites its own URLs automatically, but it
-cannot rewrite a hand-written `<img src>` — that is what `lib/asset.ts` is for. **Any
-asset loaded from `public/` by raw markup must go through `asset()`**, or it will work
-locally and 404 in production. On a user/organisation page (served from the domain root)
-or a custom domain, just leave `NEXT_PUBLIC_BASE_PATH` unset.
+## The hard part: Devanagari as 3D text
+
+**No off-the-shelf three.js path can render Devanagari.** `TextGeometry` +
+`FontLoader` and troika-three-text both map characters to glyphs 1:1, but Devanagari
+needs *complex shaping* — conjunct formation, matra reordering, and the shirorekha
+headline bar. Feed either "ॐ गं गणपतये नमः" and you get mangled text.
+
+So shaping happens once, offline, with real HarfBuzz:
+
+```
+scripts/build-mantra.mjs           # run by hand; output is committed
+   Tiro Devanagari Hindi (OFL)
+        │  harfbuzzjs (WASM HarfBuzz)  → correct glyph IDs, offsets, advances
+        │  font.glyphToPath()          → outlines
+        ▼
+   public/mantra.svg                   # vectors — no font needed to render
+        │  SVGLoader.createShapes()
+        ▼
+   ExtrudeGeometry (bevelled)          # 24k triangles, one draw call
+```
+
+Two consequences worth knowing:
+
+1. **No Devanagari webfont ships at all.** The font-loading race disappears with it.
+2. The text can never re-shape differently on someone else's machine. What was
+   verified is exactly what ships.
+
+Regenerate with `node scripts/build-mantra.mjs`. **Verify any change to the mantra
+by rendering the same string in a browser with the real webfont and comparing
+glyph-for-glyph** — wrong shaping is not something you can eyeball from the code.
 
 ---
 
 ## Architecture
 
-The single most important rule: **React renders this page once.** Scroll drives GSAP,
-GSAP writes to the DOM or to an imperative store, and the WebGL loop reads that store in
-`useFrame`. Nothing in the scroll path calls `setState`, so a re-render can never
-interrupt the flight or drop a frame on a pinned section.
+**React renders this page once.** Scroll drives GSAP, GSAP writes numbers into a
+mutable singleton, and the render loop reads them in `useFrame`. Nothing in the
+scroll path calls `setState`.
 
 ```
-<body>
- ├── WebGLBackground      z-0    fixed <canvas>, mounted once by the layout
- ├── Atmosphere           z-1    CSS grade: bloom, vignette, film grain, letterbox
- ├── SmoothScroll         ——     Lenis, driven off the GSAP ticker
- │    └── <main>          z-10   ScrollJourney: all five scenes
- ├── ScrollProgress       z-40   chapter rail
- └── Overture             z-100  spark title sequence; cues the mantra via
-                                 the `invitation:enter` event
-</body>
+app/layout.tsx        Stage (fixed canvas, mounted once) + SmoothScroll
+components/
+  Stage.tsx           <Canvas> + EffectComposer
+  Sequence.tsx        the whole shot list: autoplay beats + ScrollTrigger
+  scene/
+    MantraMesh.tsx    mantra.svg → bevelled gold
+    BigBang.tsx       spark, shockwave, ember burst
+    DustField.tsx     infinite-wrap golden dust (one draw call)
+    Backdrop.tsx      royal blue gradient void
+    StudioEnv.tsx     procedural Lightformer rig — no HDRI download
+    CameraRig.tsx     the only place targets become motion
+    PostRig.tsx       per-frame effect modulation
+lib/timeline.ts       the GSAP ⇄ WebGL bridge, and the world layout
 ```
 
-### The DOM ⇄ WebGL bridge
+`lib/timeline.ts` also owns `mantraZ(t)`, which maps scroll to depth. It
+interpolates in **reciprocal Z** with a power bias: apparent size under perspective
+goes as 1/z, so lerping z directly leaves the mantra apparently motionless for half
+the scroll and then exploding in the last few percent.
 
-`lib/scroll-state.ts` is a plain mutable singleton — deliberately not context, not state:
+---
 
-| field | written by | read by |
+## Beats
+
+| Beat | Driven by | What happens |
 | --- | --- | --- |
-| `travelTarget` | master ScrollTrigger | `CameraRig` → damped into `travel` |
-| `warpTarget` | horizontal section | particle shader (`uWarp`) |
-| `driftTarget` | horizontal section | particle shader (`uDrift`) |
-| `intensityTarget` | per-scene `onToggle` | particle shader (`uIntensity`) |
-| `pointerX/Y` | `pointermove` | camera sway + parallax layer sway |
-
-`CameraRig` mounts first inside the `<Canvas>` and is the only place targets are
-integrated into motion, using frame-rate independent exponential damping — the flight
-feels identical at 60Hz and 144Hz.
-
-### Lenis ⇄ GSAP
-
-Three details do most of the work (see `components/SmoothScroll.tsx`):
-
-1. `autoRaf: false` — Lenis is ticked from `gsap.ticker`, so scroll interpolation and
-   every ScrollTrigger run in the same frame. Two loops = one frame of lag between the
-   type and the WebGL, which reads as cheap.
-2. `gsap.ticker.lagSmoothing(0)` — a heavy frame must not rewind GSAP's clock; that shows
-   up as a visible hitch on a pinned section.
-3. `lenis.on('scroll', ScrollTrigger.update)` — no `scrollerProxy` needed, because Lenis
-   moves the real window scroll position.
-
-### The particle flight
-
-The camera never actually moves forward. `components/webgl/particleShader.ts` advances
-every particle along +Z by `uTravel` and wraps it modulo the tube depth, so the flight is
-infinite, nothing is re-seeded on the CPU, and the field never thins out. Each particle
-carries a depth-derived `layer` so near motes travel faster than far ones — parallax
-inside a single draw call. Two `<Particles>` layers (far field + near dust) = two draw
-calls total.
-
-Bloom is faked in the fragment shader (wide halo + hot core, additively blended) rather
-than paid for with a post-processing pass.
+| Void | autoplay | Black. Fonts/geometry settle behind it, silently — no counter. |
+| Ignition | autoplay | A point of light finds itself and flickers, like a match catching. |
+| Big bang | autoplay | The core scales *past the camera* and swallows the frame; shockwave and 1800 embers go with it. The white-out is a real over-exposed light source, not a DOM overlay. |
+| Reveal | autoplay | The mantra materialises out of the residual glow, far away. Overlaps the explosion's tail on purpose — it should emerge *from* the light. |
+| Approach | **scroll** | It grows from a speck. A slow yaw drags specular highlights across every bevel — that travelling highlight is what makes it read as metal instead of flat yellow plastic. |
+| Pass-through | **scroll** | The camera flies through the letterforms; gold interior walls whip past. |
 
 ---
 
-## The five scenes
+## Look development notes
 
-All GSAP lives in `components/ScrollJourney.tsx`, authored in scene order so the
-choreography reads like a shot list. Scenes are dumb markup with `data-*` hooks — you can
-re-time the film without touching markup, or re-art-direct the markup without touching
-the timeline. Everything is wrapped in one `gsap.matchMedia()` scoped to `<main>`, so
-breakpoint variants are declarative and `mm.revert()` cleans up every trigger, pin-spacer
-and split in one call.
+Most of the "gold" is `StudioEnv.tsx`, not the material — metal has no diffuse
+response, so it shows you nothing but its environment. The rig is built from
+`<Lightformer>` rectangles baked once to a 256px cube, rather than an HDRI: drei's
+presets fetch megabytes from a CDN, which is a third-party dependency on the
+critical path of the opening shot.
 
-| # | Scene | Motion |
-| --- | --- | --- |
-| 00 | **The Overture** | Black frame. A golden spark ignites dead centre with anamorphic flare streaks, flickers like a candle catching, then rushes the lens in a bloom of light, throwing embers. Not scroll-linked — it is the first four seconds. |
-| 01 | **The Invocation** | `ॐ गं गणपतये नमः` arrives *out of* that bloom: from a speck in deep space, blurred to 30px, rushing forward on `expo.out` until it fills the frame and settles. Scrolling only takes it away. |
-| 02 | **The Two** | The names, revealed on approach — masked line reveal; on scroll they recede (scale down, blur up, fade) rather than scrolling away. |
-| 03 | **Parallax Cutout** | Three layers, differential `yPercent` (16 / 28 / 104 units) + per-layer pointer sway at different amplitudes. |
-| 04 | **Celebrations** | Pinned section, track translated on X by vertical progress; per-card entrance driven by `containerAnimation`; dust drifts sideways and warps. |
-| 05 | **RSVP** | Vertical scroll resumes, dust warms to 125%, form staggers in over the same continuous field. |
+Three settings that were tuned the hard way, and why:
 
-### The opening handover
+- **Bloom threshold sits high (0.72).** Lower, and ACES tone mapping desaturates
+  every blown pixel toward white — the scene stops reading as gold and becomes a
+  monochrome starfield.
+- **Chromatic aberration is zero at rest.** Even a sub-pixel offset resamples 1px
+  dust motes across channels and speckles the field magenta and green. It is a
+  motion cue, so it only exists in motion.
+- **The canvas never re-renders.** drei's `PerformanceMonitor` drives DPR through
+  React state; re-rendering the Canvas subtree mid-mount races the `Environment`
+  portal and the loader's Suspense boundary, and crashed the scene intermittently.
+  A canvas that never re-renders is worth more than adaptive resolution.
 
-The Overture owns only the veil and the spark; the mantra belongs to the Invocation
-scene and is animated by ScrollJourney. The two are stitched by `ENTER_EVENT`, dispatched
-*mid-bloom* rather than at the end — so the title is already flying toward the viewer
-while the veil is still clearing. It reads as one continuous move instead of a loader
-that finishes and hands over. ScrollJourney also arms a `delayedCall` fallback, so the
-title can never be stranded off-screen if the Overture is removed or fails to dispatch.
-
-Webfonts are awaited silently behind the black frame (no counter, no progress bar), with
-a 2.5s cap so a slow CDN can't stall the film. Devanagari must never flash in a fallback
-face before it flies.
-
-### Reduced motion
-
-`prefers-reduced-motion: reduce` is a first-class branch: everything is revealed, no
-triggers are wired, Lenis smoothing is off. Verified — no element is left invisible.
+`window.__seq` exposes the master timeline so the ~3s opening can be scrubbed to an
+exact progress. This is not vanity: under a software renderer a screenshot costs
+longer than a beat, so sampling the sequence on a wall clock silently drifts past
+the explosion entirely. `window.__gl` / `window.__scene` expose renderer stats.
 
 ---
 
-## Swapping in the real content
+## Deployment
 
-**Copy, names, dates, events** — all of it is in `lib/wedding.ts`. Adding a fifth event
-needs no CSS change; the pinned section measures its own track.
+`.github/workflows/deploy.yml` builds a static export and publishes to GitHub Pages
+on every push. A GitHub **project** page serves from `/<repo>/`, so the base path is
+baked in at build time via `NEXT_PUBLIC_BASE_PATH`.
 
-**Photography** — replace the three placeholders in `public/images/`:
-
-| file | what it should be |
-| --- | --- |
-| `layer-1-palace.svg` | Wide, dark, slightly de-focused venue shot. Subject low in frame, edges dark so it dissolves into the dust. |
-| `layer-2-couple.svg` | Background-removed cutout of the couple. Transparency is essential — this layer floats between the venue and the foreground. |
-| `layer-3-foreground.svg` | Heavily out-of-focus marigold garlands / gold arch details. Always blurred, always fastest. |
-
-Then switch the `<img>` tags in `components/scenes/ParallaxCutout.tsx` to `next/image`
-(`priority` on layer 2). They are plain `<img>` today only because the placeholders are
-SVG.
-
-**RSVP submissions** currently `console.info` the payload — wire `handleSubmit` in
-`components/scenes/Rsvp.tsx` to a route handler at `app/api/rsvp/route.ts` or a form
-service.
-
----
-
-## Gotchas worth knowing
-
-The gold-foil headings use `background-clip: text` with a transparent fill. **Do not run
-SplitText (or any per-letter wrapper) on them** — splitting moves the glyphs into child
-spans that own no background, and transparent fill over no background renders literally
-nothing. That is why the hero names are revealed as masked whole words, while the
-flat-coloured parallax caption is the element that gets the SplitText line treatment
-(with `autoSplit: true`, so it re-splits when the webfont loads or the wrap changes).
-
-**A `yoyo` tween returns to whatever value it captured on its first render.** The spark's
-flicker originally overlapped its ignition fade, so it captured a mid-fade opacity and
-left the spark stranded at 81% brightness for the rest of the sequence. Start yoyo tweens
-*after* whatever sets their baseline.
-
-**Anything GSAP animates in from nothing must start hidden in CSS**, not just in the
-timeline — between first paint and hydration there is no GSAP, and un-animated elements
-flash at full opacity. That is why the spark, embers, mantra and aura all carry
-`opacity-0` in markup.
+**Anything loaded from `public/` by our own code must go through `asset()`**
+(`lib/asset.ts`) — including `mantra.svg`. Next rewrites its own URLs but not ours,
+so miss this and it works locally and 404s in production.
