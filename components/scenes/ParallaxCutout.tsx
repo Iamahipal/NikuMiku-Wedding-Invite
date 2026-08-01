@@ -1,3 +1,4 @@
+import { asset } from '@/lib/asset';
 import { couple } from '@/lib/wedding';
 
 /**
@@ -30,7 +31,7 @@ export default function ParallaxCutout() {
           className="absolute inset-0 will-change-transform"
         >
           <img
-            src="/images/layer-1-palace.svg"
+            src={asset('/images/layer-1-palace.svg')}
             alt=""
             aria-hidden
             className="h-full w-full object-cover object-bottom opacity-80"
@@ -52,7 +53,7 @@ export default function ParallaxCutout() {
             }}
           />
           <img
-            src="/images/layer-2-couple.svg"
+            src={asset('/images/layer-2-couple.svg')}
             alt={`${couple.bride} and ${couple.groom}`}
             className="relative h-[78vh] w-auto max-w-none object-contain drop-shadow-[0_40px_60px_rgba(0,0,0,0.8)]"
           />
@@ -64,7 +65,7 @@ export default function ParallaxCutout() {
           className="pointer-events-none absolute inset-0 will-change-transform"
         >
           <img
-            src="/images/layer-3-foreground.svg"
+            src={asset('/images/layer-3-foreground.svg')}
             alt=""
             aria-hidden
             className="h-full w-full object-cover opacity-[0.62]"

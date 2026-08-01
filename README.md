@@ -6,12 +6,30 @@ gold, and one continuous WebGL dust field that the entire page flies through.
 Benchmarks for feel: `landonorris.com` (layered cutout parallax, pinned horizontal acts)
 and `shopify.com/editions` (weighted inertia, scene-linked background motion).
 
+**Live:** https://iamahipal.github.io/NikuMiku-Wedding-Invite/
+
 ```bash
 npm install
 npm run dev        # http://localhost:3000
-npm run build      # production build
+npm run build      # static export -> ./out
+npm run preview    # serve the built export
 npm run typecheck  # tsc --noEmit
 ```
+
+## Deployment
+
+`.github/workflows/deploy.yml` builds and publishes to GitHub Pages on every push to
+`claude/wedding-invitation-cinematic-wr6ii7`. The site is a fully pre-rendered static
+export (`output: 'export'`), so it needs no server and could equally be dropped on any
+CDN or bucket.
+
+One thing to know if you move it: a GitHub **project** page is served from
+`https://<user>.github.io/<repo>/`, so the build needs that prefix baked in. The workflow
+passes it as `NEXT_PUBLIC_BASE_PATH`. Next rewrites its own URLs automatically, but it
+cannot rewrite a hand-written `<img src>` — that is what `lib/asset.ts` is for. **Any
+asset loaded from `public/` by raw markup must go through `asset()`**, or it will work
+locally and 404 in production. On a user/organisation page (served from the domain root)
+or a custom domain, just leave `NEXT_PUBLIC_BASE_PATH` unset.
 
 ---
 
